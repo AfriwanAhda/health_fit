@@ -1,0 +1,33 @@
+name: health
+description: Wrapper for the iOS HealthKit and Android GoogleFit services.
+version: 4.0.0
+homepage: https://github.com/cph-cachet/flutter-plugins/tree/master/packages/health
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+  flutter: ">=2.2.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  intl: ^0.17.0
+  device_info_plus: ^3.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter.
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: cachet.plugins.health
+        pluginClass: HealthPlugin
+      ios:
+        pluginClass: HealthPlugin
