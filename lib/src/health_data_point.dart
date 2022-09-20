@@ -155,4 +155,3 @@ class HealthDataPoint {
   int get hashCode => Object.hash(value, unit, dateFrom, dateTo, type, platform,
       deviceId, sourceId, sourceName, sleepStages);
 }
-

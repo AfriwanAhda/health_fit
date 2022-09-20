@@ -2,11 +2,13 @@ library health;
 
 import 'dart:async';
 import 'dart:collection';
+import 'dart:core';
 import 'dart:io' show Platform;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'src/sleep_stage.dart';
 
 part 'src/data_types.dart';
 part 'src/functions.dart';

@@ -17,6 +17,14 @@ import com.google.android.gms.fitness.request.SessionInsertRequest
 import com.google.android.gms.fitness.request.SessionReadRequest
 import com.google.android.gms.fitness.result.DataReadResponse
 import com.google.android.gms.fitness.result.SessionReadResponse
+
+import com.google.android.gms.fitness.data.DataPoint
+import com.google.android.gms.fitness.data.DataSet
+import com.google.android.gms.fitness.data.DataSource
+import com.google.android.gms.fitness.data.DataType
+import com.google.android.gms.fitness.data.Field
+import com.google.android.gms.fitness.data.Session
+import com.google.android.gms.fitness.data.SleepStages
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -31,6 +39,19 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.security.Permission
 import java.util.*
 import java.util.concurrent.*
+
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+
+
+
+
+import com.google.android.gms.fitness.FitnessActivities.SLEEP_AWAKE
+import com.google.android.gms.fitness.FitnessActivities.SLEEP_DEEP
+import com.google.android.gms.fitness.FitnessActivities.SLEEP_LIGHT
+import com.google.android.gms.fitness.FitnessActivities.SLEEP_REM
 
 
 const val GOOGLE_FIT_PERMISSIONS_REQUEST_CODE = 1111
@@ -67,6 +88,7 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
   val workoutTypeMap = mapOf(
     "AEROBICS" to FitnessActivities.AEROBICS,
     "AMERICAN_FOOTBALL" to FitnessActivities.FOOTBALL_AMERICAN,
+    "ARCHERY" to FitnessActivities.ARCHERY,
     "ARCHERY" to FitnessActivities.ARCHERY,
     "AUSTRALIAN_FOOTBALL" to FitnessActivities.FOOTBALL_AUSTRALIAN,
     "BADMINTON" to FitnessActivities.BADMINTON,
@@ -553,26 +575,66 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
       DataType.TYPE_SLEEP_SEGMENT -> {
         // request to the sessions for sleep data
         val request = SessionReadRequest.Builder()
-          .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
-          .enableServerQueries()
-          .readSessionsFromAllApps()
+          .read(DataType.TYPE_SLEEP_SEGMENT)
           .includeSleepSessions()
+          .readSessionsFromAllApps()
+          .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
+//          .enableServerQueries()
           .build()
         Fitness.getSessionsClient(activity!!.applicationContext, googleSignInAccount)
           .readSession(request)
           .addOnSuccessListener(threadPoolExecutor!!, sleepDataHandler(type, result))
           .addOnFailureListener(errHandler(result))
+//          .addOnSuccessListener { dumpSleepSessions(it, result) }
+//          .addOnSuccessListener(threadPoolExecutor!!, dumpSleepSessions(it))
+//          .addOnFailureListener { Log.e("--> addOnFailureListener", "Unable to read sleep sessions", it) }
+
+
+
+//        val sessionReadRequest = SessionReadRequest.Builder()
+//          .read(DataType.TYPE_SLEEP_SEGMENT)
+//          // By default, only activity sessions are included, not sleep sessions. Specifying
+//          // includeSleepSessions also sets the behaviour to *exclude* activity sessions.
+//          .includeSleepSessions()
+//          .readSessionsFromAllApps()
+//          .setTimeInterval(periodStartMillis, periodEndMillis, TimeUnit.MILLISECONDS)
+//          .build()
+//
+//        client.readSession(sessionReadRequest)
+//          .addOnSuccessListener { dumpSleepSessions(it) }
+//          .addOnFailureListener { Log.e(TAG, "Unable to read sleep sessions", it) }
+
+
+
+        Log.i("--> request", request.toString())
+        Log.i("--> type", type.toString())
+        Log.i("--> result", result.toString())
+
+
+
+//        val sessionReadRequest = SessionReadRequest.Builder()
+//          .read(DataType.TYPE_SLEEP_SEGMENT)
+//          // By default, only activity sessions are included, not sleep sessions. Specifying
+//          // includeSleepSessions also sets the behaviour to *exclude* activity sessions.
+//          .includeSleepSessions()
+//          .readSessionsFromAllApps()
+//          .setTimeInterval(periodStartMillis, periodEndMillis, TimeUnit.MILLISECONDS)
+//          .build()
+//
+//        client.readSession(sessionReadRequest)
+//          .addOnSuccessListener { dumpSleepSessions(it) }
+//          .addOnFailureListener { Log.e(TAG, "Unable to read sleep sessions", it) }
 
       }
       DataType.TYPE_ACTIVITY_SEGMENT -> {
         val readRequest: SessionReadRequest
         val readRequestBuilder = SessionReadRequest.Builder()
-            .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
-            .enableServerQueries()
-            .readSessionsFromAllApps()
-            .includeActivitySessions()
-            .read(dataType)
-            .read(DataType.TYPE_CALORIES_EXPENDED)
+          .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
+          .enableServerQueries()
+          .readSessionsFromAllApps()
+          .includeActivitySessions()
+          .read(dataType)
+          .read(DataType.TYPE_CALORIES_EXPENDED)
 
         // If fine location is enabled, read distance data
         if (ContextCompat.checkSelfPermission(
@@ -580,7 +642,7 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
             android.Manifest.permission.ACCESS_FINE_LOCATION
           ) == PackageManager.PERMISSION_GRANTED
         ) {
-          // Request permission with distance data. 
+          // Request permission with distance data.
           // Google Fit requires this when we query for distance data
           // as it is restricted data
           if (!GoogleSignIn.hasPermissions(googleSignInAccount, fitnessOptions)) {
@@ -592,7 +654,7 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
             )
           }
           readRequestBuilder.read(DataType.TYPE_DISTANCE_DELTA)
-        } 
+        }
         readRequest = readRequestBuilder.build()
         Fitness.getSessionsClient(activity!!.applicationContext, googleSignInAccount)
           .readSession(readRequest)
@@ -642,10 +704,50 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
   private fun sleepDataHandler(type: String, result: Result) =
     OnSuccessListener { response: SessionReadResponse ->
       val healthData: MutableList<Map<String, Any?>> = mutableListOf()
+
+//      dumpSleepSessions(response)
+      Log.i("--> result", result.toString())
+
       for (session in response.sessions) {
+//        dumpSleepSession(session, response.getDataSet(session))
+//        Log.i("--> response getDataSet", response.getDataSet(session))
+        Log.i("--> session", session.toString())
 
         // Return sleep time in Minutes if requested ASLEEP data
-        if (type == SLEEP_ASLEEP) {
+//        if (type == SLEEP_ASLEEP) {
+//          healthData.add(
+//            hashMapOf(
+//              "value" to session.getEndTime(TimeUnit.MINUTES) - session.getStartTime(TimeUnit.MINUTES),
+//              "date_from" to session.getStartTime(TimeUnit.MILLISECONDS),
+//              "date_to" to session.getEndTime(TimeUnit.MILLISECONDS),
+//              "unit" to "MINUTES",
+//              "source_name" to session.appPackageName,
+//              "source_id" to session.identifier
+//            )
+//          )
+//        }
+
+
+
+        for (dataSet in response.getDataSet(session)) {
+          val sleepStages: MutableList<Map<String, Any?>> = mutableListOf()
+
+          for (dataPoint in dataSet.dataPoints) {
+            val sleepStageOrdinal = dataPoint.getValue(Field.FIELD_SLEEP_SEGMENT_TYPE).asInt()
+            val sleepStage = SLEEP_STAGES[sleepStageOrdinal]
+
+            val durationMillis = dataPoint.getEndTime(TimeUnit.MILLISECONDS) - dataPoint.getStartTime(TimeUnit.MILLISECONDS)
+            val duration = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
+            sleepStages.add(
+              hashMapOf(
+                "sleep_stage" to sleepStage,
+                "duration_minutes" to duration
+              )
+            )
+
+            Log.i("--> dumpSleepDataSets", "\t$sleepStage: $duration (mins)")
+          }
+
           healthData.add(
             hashMapOf(
               "value" to session.getEndTime(TimeUnit.MINUTES) - session.getStartTime(TimeUnit.MINUTES),
@@ -653,13 +755,20 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
               "date_to" to session.getEndTime(TimeUnit.MILLISECONDS),
               "unit" to "MINUTES",
               "source_name" to session.appPackageName,
-              "source_id" to session.identifier
+              "source_id" to session.identifier,
+              "sleep_stages" to sleepStages
             )
           )
+
+          Log.i("--> Sleep Detail", healthData.toString())
         }
+
+
+
 
         if (type == SLEEP_IN_BED) {
           val dataSets = response.getDataSet(session)
+
 
           // If the sleep session has finer granularity sub-components, extract them:
           if (dataSets.isNotEmpty()) {
@@ -729,6 +838,90 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
       }
       activity!!.runOnUiThread { result.success(healthData) }
     }
+
+
+  /**
+   * Filters a response form the Sessions client to contain only sleep sessions, then writes to
+   * the log.
+   *
+   * @param response Response from the Sessions client.
+   */
+  private fun dumpSleepSessions(response: SessionReadResponse) {
+//    Log.clear()
+    Log.i("--> dumpSleepSessions 1", response.toString())
+    for (session in response.sessions) {
+      dumpSleepSession(session, response.getDataSet(session))
+
+    }
+  }
+
+  private fun dumpSleepSession(session: Session, dataSets: List<DataSet>) {
+    dumpSleepSessionMetadata(session)
+    dumpSleepDataSets(dataSets, session)
+//    Log.i("--> dumpSleepSessions 2", response.toString())
+  }
+
+  private fun dumpSleepSessionMetadata(session: Session) {
+    val (startDateTime, endDateTime) = getSessionStartAndEnd(session)
+    val totalSleepForNight = calculateSessionDuration(session)
+    Log.i("--> dumpSleepSessionMetadata", "$startDateTime to $endDateTime ($totalSleepForNight mins)")
+  }
+
+  private fun dumpSleepDataSets(dataSets: List<DataSet>, session: Session) {
+    val healthData: MutableList<Map<String, Any?>> = mutableListOf()
+
+    for (dataSet in dataSets) {
+      val sleepDetail: MutableList<Map<String, Any?>> = mutableListOf()
+
+      for (dataPoint in dataSet.dataPoints) {
+        val sleepStageOrdinal = dataPoint.getValue(Field.FIELD_SLEEP_SEGMENT_TYPE).asInt()
+        val sleepStage = SLEEP_STAGES[sleepStageOrdinal]
+
+        val durationMillis = dataPoint.getEndTime(TimeUnit.MILLISECONDS) - dataPoint.getStartTime(TimeUnit.MILLISECONDS)
+        val duration = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
+        sleepDetail.add(
+          hashMapOf(
+            "sleepStage" to sleepStage,
+            "duration_minutes" to duration
+          )
+        )
+
+        Log.i("--> dumpSleepDataSets", "\t$sleepStage: $duration (mins)")
+      }
+
+      healthData.add(
+        hashMapOf(
+          "value" to session.getEndTime(TimeUnit.MINUTES) - session.getStartTime(TimeUnit.MINUTES),
+          "date_from" to session.getStartTime(TimeUnit.MILLISECONDS),
+          "date_to" to session.getEndTime(TimeUnit.MILLISECONDS),
+          "unit" to "MINUTES",
+          "source_name" to session.appPackageName,
+          "source_id" to session.identifier,
+          "sleep_detail" to sleepDetail
+        )
+      )
+
+      Log.i("--> Sleep Detail", healthData.toString())
+    }
+  }
+
+  /**
+   * Calculates the duration of a session in minutes.
+   *
+   * @param session
+   * @return The duration in minutes.
+   */
+  private fun calculateSessionDuration(session: Session): Long {
+    val total = session.getEndTime(TimeUnit.MILLISECONDS) - session.getStartTime(TimeUnit.MILLISECONDS)
+    return TimeUnit.MILLISECONDS.toMinutes(total)
+  }
+
+  private fun getSessionStartAndEnd(session: Session): Pair<String, String> {
+    val dateFormat = DateFormat.getDateTimeInstance()
+    val startDateTime = dateFormat.format(session.getStartTime(TimeUnit.MILLISECONDS))
+    val endDateTime = dateFormat.format(session.getEndTime(TimeUnit.MILLISECONDS))
+    return startDateTime to endDateTime
+  }
 
   private fun workoutDataHandler(type: String, result: Result) =
     OnSuccessListener { response: SessionReadResponse ->
@@ -967,3 +1160,16 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
     activity = null
   }
 }
+
+/**
+ * Names for the {@code SleepStages} values.
+ */
+val SLEEP_STAGES = arrayOf(
+  "Unused",
+  "Awake (during sleep)",
+  "Sleep",
+  "Out-of-bed",
+  "Light sleep",
+  "Deep sleep",
+  "REM sleep"
+)

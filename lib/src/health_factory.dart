@@ -473,4 +473,3 @@ class HealthFactory {
     return success ?? false;
   }
 }
-
