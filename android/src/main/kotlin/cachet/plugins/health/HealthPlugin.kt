@@ -588,43 +588,6 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
 //          .addOnSuccessListener { dumpSleepSessions(it, result) }
 //          .addOnSuccessListener(threadPoolExecutor!!, dumpSleepSessions(it))
 //          .addOnFailureListener { Log.e("--> addOnFailureListener", "Unable to read sleep sessions", it) }
-
-
-
-//        val sessionReadRequest = SessionReadRequest.Builder()
-//          .read(DataType.TYPE_SLEEP_SEGMENT)
-//          // By default, only activity sessions are included, not sleep sessions. Specifying
-//          // includeSleepSessions also sets the behaviour to *exclude* activity sessions.
-//          .includeSleepSessions()
-//          .readSessionsFromAllApps()
-//          .setTimeInterval(periodStartMillis, periodEndMillis, TimeUnit.MILLISECONDS)
-//          .build()
-//
-//        client.readSession(sessionReadRequest)
-//          .addOnSuccessListener { dumpSleepSessions(it) }
-//          .addOnFailureListener { Log.e(TAG, "Unable to read sleep sessions", it) }
-
-
-
-        Log.i("--> request", request.toString())
-        Log.i("--> type", type.toString())
-        Log.i("--> result", result.toString())
-
-
-
-//        val sessionReadRequest = SessionReadRequest.Builder()
-//          .read(DataType.TYPE_SLEEP_SEGMENT)
-//          // By default, only activity sessions are included, not sleep sessions. Specifying
-//          // includeSleepSessions also sets the behaviour to *exclude* activity sessions.
-//          .includeSleepSessions()
-//          .readSessionsFromAllApps()
-//          .setTimeInterval(periodStartMillis, periodEndMillis, TimeUnit.MILLISECONDS)
-//          .build()
-//
-//        client.readSession(sessionReadRequest)
-//          .addOnSuccessListener { dumpSleepSessions(it) }
-//          .addOnFailureListener { Log.e(TAG, "Unable to read sleep sessions", it) }
-
       }
       DataType.TYPE_ACTIVITY_SEGMENT -> {
         val readRequest: SessionReadRequest
@@ -705,13 +668,7 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
     OnSuccessListener { response: SessionReadResponse ->
       val healthData: MutableList<Map<String, Any?>> = mutableListOf()
 
-//      dumpSleepSessions(response)
-      Log.i("--> result", result.toString())
-
       for (session in response.sessions) {
-//        dumpSleepSession(session, response.getDataSet(session))
-//        Log.i("--> response getDataSet", response.getDataSet(session))
-        Log.i("--> session", session.toString())
 
         // Return sleep time in Minutes if requested ASLEEP data
 //        if (type == SLEEP_ASLEEP) {
