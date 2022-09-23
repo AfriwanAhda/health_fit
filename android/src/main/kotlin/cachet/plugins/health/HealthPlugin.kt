@@ -579,15 +579,13 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
           .includeSleepSessions()
           .readSessionsFromAllApps()
           .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
-//          .enableServerQueries()
+          .enableServerQueries()
           .build()
         Fitness.getSessionsClient(activity!!.applicationContext, googleSignInAccount)
           .readSession(request)
           .addOnSuccessListener(threadPoolExecutor!!, sleepDataHandler(type, result))
           .addOnFailureListener(errHandler(result))
-//          .addOnSuccessListener { dumpSleepSessions(it, result) }
-//          .addOnSuccessListener(threadPoolExecutor!!, dumpSleepSessions(it))
-//          .addOnFailureListener { Log.e("--> addOnFailureListener", "Unable to read sleep sessions", it) }
+
       }
       DataType.TYPE_ACTIVITY_SEGMENT -> {
         val readRequest: SessionReadRequest
@@ -667,65 +665,43 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
   private fun sleepDataHandler(type: String, result: Result) =
     OnSuccessListener { response: SessionReadResponse ->
       val healthData: MutableList<Map<String, Any?>> = mutableListOf()
-
       for (session in response.sessions) {
 
         // Return sleep time in Minutes if requested ASLEEP data
-//        if (type == SLEEP_ASLEEP) {
-//          healthData.add(
-//            hashMapOf(
-//              "value" to session.getEndTime(TimeUnit.MINUTES) - session.getStartTime(TimeUnit.MINUTES),
-//              "date_from" to session.getStartTime(TimeUnit.MILLISECONDS),
-//              "date_to" to session.getEndTime(TimeUnit.MILLISECONDS),
-//              "unit" to "MINUTES",
-//              "source_name" to session.appPackageName,
-//              "source_id" to session.identifier
-//            )
-//          )
-//        }
+        if (type == SLEEP_ASLEEP) {
+          for (dataSet in response.getDataSet(session)) {
+            val sleepStages: MutableList<Map<String, Any?>> = mutableListOf()
 
+            for (dataPoint in dataSet.dataPoints) {
+              val sleepStageOrdinal = dataPoint.getValue(Field.FIELD_SLEEP_SEGMENT_TYPE).asInt()
+              val sleepStage = SLEEP_STAGES[sleepStageOrdinal]
+              // add sleep stages data
+              val durationMillis = dataPoint.getEndTime(TimeUnit.MILLISECONDS) - dataPoint.getStartTime(TimeUnit.MILLISECONDS)
+              val duration = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
+              sleepStages.add(
+                hashMapOf(
+                  "sleep_stage" to sleepStage,
+                  "duration_minutes" to duration
+                )
+              )
+            }
 
-
-        for (dataSet in response.getDataSet(session)) {
-          val sleepStages: MutableList<Map<String, Any?>> = mutableListOf()
-
-          for (dataPoint in dataSet.dataPoints) {
-            val sleepStageOrdinal = dataPoint.getValue(Field.FIELD_SLEEP_SEGMENT_TYPE).asInt()
-            val sleepStage = SLEEP_STAGES[sleepStageOrdinal]
-
-            val durationMillis = dataPoint.getEndTime(TimeUnit.MILLISECONDS) - dataPoint.getStartTime(TimeUnit.MILLISECONDS)
-            val duration = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
-            sleepStages.add(
+            healthData.add(
               hashMapOf(
-                "sleep_stage" to sleepStage,
-                "duration_minutes" to duration
+                "value" to session.getEndTime(TimeUnit.MINUTES) - session.getStartTime(TimeUnit.MINUTES),
+                "date_from" to session.getStartTime(TimeUnit.MILLISECONDS),
+                "date_to" to session.getEndTime(TimeUnit.MILLISECONDS),
+                "unit" to "MINUTES",
+                "source_name" to session.appPackageName,
+                "source_id" to session.identifier,
+                "sleep_stages" to sleepStages
               )
             )
-
-            Log.i("--> dumpSleepDataSets", "\t$sleepStage: $duration (mins)")
           }
-
-          healthData.add(
-            hashMapOf(
-              "value" to session.getEndTime(TimeUnit.MINUTES) - session.getStartTime(TimeUnit.MINUTES),
-              "date_from" to session.getStartTime(TimeUnit.MILLISECONDS),
-              "date_to" to session.getEndTime(TimeUnit.MILLISECONDS),
-              "unit" to "MINUTES",
-              "source_name" to session.appPackageName,
-              "source_id" to session.identifier,
-              "sleep_stages" to sleepStages
-            )
-          )
-
-          Log.i("--> Sleep Detail", healthData.toString())
         }
-
-
-
 
         if (type == SLEEP_IN_BED) {
           val dataSets = response.getDataSet(session)
-
 
           // If the sleep session has finer granularity sub-components, extract them:
           if (dataSets.isNotEmpty()) {
@@ -795,90 +771,6 @@ class HealthPlugin(private var channel: MethodChannel? = null) : MethodCallHandl
       }
       activity!!.runOnUiThread { result.success(healthData) }
     }
-
-
-  /**
-   * Filters a response form the Sessions client to contain only sleep sessions, then writes to
-   * the log.
-   *
-   * @param response Response from the Sessions client.
-   */
-  private fun dumpSleepSessions(response: SessionReadResponse) {
-//    Log.clear()
-    Log.i("--> dumpSleepSessions 1", response.toString())
-    for (session in response.sessions) {
-      dumpSleepSession(session, response.getDataSet(session))
-
-    }
-  }
-
-  private fun dumpSleepSession(session: Session, dataSets: List<DataSet>) {
-    dumpSleepSessionMetadata(session)
-    dumpSleepDataSets(dataSets, session)
-//    Log.i("--> dumpSleepSessions 2", response.toString())
-  }
-
-  private fun dumpSleepSessionMetadata(session: Session) {
-    val (startDateTime, endDateTime) = getSessionStartAndEnd(session)
-    val totalSleepForNight = calculateSessionDuration(session)
-    Log.i("--> dumpSleepSessionMetadata", "$startDateTime to $endDateTime ($totalSleepForNight mins)")
-  }
-
-  private fun dumpSleepDataSets(dataSets: List<DataSet>, session: Session) {
-    val healthData: MutableList<Map<String, Any?>> = mutableListOf()
-
-    for (dataSet in dataSets) {
-      val sleepDetail: MutableList<Map<String, Any?>> = mutableListOf()
-
-      for (dataPoint in dataSet.dataPoints) {
-        val sleepStageOrdinal = dataPoint.getValue(Field.FIELD_SLEEP_SEGMENT_TYPE).asInt()
-        val sleepStage = SLEEP_STAGES[sleepStageOrdinal]
-
-        val durationMillis = dataPoint.getEndTime(TimeUnit.MILLISECONDS) - dataPoint.getStartTime(TimeUnit.MILLISECONDS)
-        val duration = TimeUnit.MILLISECONDS.toMinutes(durationMillis)
-        sleepDetail.add(
-          hashMapOf(
-            "sleepStage" to sleepStage,
-            "duration_minutes" to duration
-          )
-        )
-
-        Log.i("--> dumpSleepDataSets", "\t$sleepStage: $duration (mins)")
-      }
-
-      healthData.add(
-        hashMapOf(
-          "value" to session.getEndTime(TimeUnit.MINUTES) - session.getStartTime(TimeUnit.MINUTES),
-          "date_from" to session.getStartTime(TimeUnit.MILLISECONDS),
-          "date_to" to session.getEndTime(TimeUnit.MILLISECONDS),
-          "unit" to "MINUTES",
-          "source_name" to session.appPackageName,
-          "source_id" to session.identifier,
-          "sleep_detail" to sleepDetail
-        )
-      )
-
-      Log.i("--> Sleep Detail", healthData.toString())
-    }
-  }
-
-  /**
-   * Calculates the duration of a session in minutes.
-   *
-   * @param session
-   * @return The duration in minutes.
-   */
-  private fun calculateSessionDuration(session: Session): Long {
-    val total = session.getEndTime(TimeUnit.MILLISECONDS) - session.getStartTime(TimeUnit.MILLISECONDS)
-    return TimeUnit.MILLISECONDS.toMinutes(total)
-  }
-
-  private fun getSessionStartAndEnd(session: Session): Pair<String, String> {
-    val dateFormat = DateFormat.getDateTimeInstance()
-    val startDateTime = dateFormat.format(session.getStartTime(TimeUnit.MILLISECONDS))
-    val endDateTime = dateFormat.format(session.getEndTime(TimeUnit.MILLISECONDS))
-    return startDateTime to endDateTime
-  }
 
   private fun workoutDataHandler(type: String, result: Result) =
     OnSuccessListener { response: SessionReadResponse ->
