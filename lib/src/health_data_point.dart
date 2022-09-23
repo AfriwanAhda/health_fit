@@ -14,7 +14,6 @@ class HealthDataPoint {
   String _sourceId;
   String _sourceName;
   List<Object?> _sleepStages;
-  double _totalSleep;
 
   HealthDataPoint(
       this._value,
@@ -26,8 +25,7 @@ class HealthDataPoint {
       this._deviceId,
       this._sourceId,
       this._sourceName,
-      this._sleepStages,
-      this._totalSleep) {
+      this._sleepStages) {
     // set the value to minutes rather than the category
     // returned by the native API
     if (type == HealthDataType.MINDFULNESS ||
@@ -71,8 +69,7 @@ class HealthDataPoint {
         json['device_id'],
         json['source_id'],
         json['source_name'],
-        json['sleep_stages'],
-        0);
+        json['sleep_stages']);
   }
 
   /// Converts the [HealthDataPoint] to a json object
@@ -134,8 +131,6 @@ class HealthDataPoint {
   String get sourceName => _sourceName;
 
   List<Object?> get sleepStages => _sleepStages;
-
-  double get totalSleep => _totalSleep;
 
   @override
   bool operator ==(Object o) {

@@ -168,7 +168,7 @@ class HealthFactory {
           '',
           '',
           [],
-          0);
+      );
 
       bmiHealthPoints.add(x);
     }
@@ -383,7 +383,6 @@ class HealthFactory {
         sourceId,
         sourceName,
         sleepStages,
-        0,
       );
     }).toList();
 
