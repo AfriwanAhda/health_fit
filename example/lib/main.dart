@@ -39,26 +39,29 @@ class _HealthAppState extends State<HealthApp> {
 
     // define the types to get
     final types = [
-      // HealthDataType.STEPS,
-      // HealthDataType.WEIGHT,
-      // HealthDataType.HEIGHT,
-      // HealthDataType.BLOOD_GLUCOSE,
+      HealthDataType.STEPS,
+      HealthDataType.SLEEP_IN_BED,
+      HealthDataType.SLEEP_AWAKE,
+      HealthDataType.SLEEP_ASLEEP,
+      HealthDataType.HEIGHT,
+      HealthDataType.BLOOD_GLUCOSE,
+      HealthDataType.WORKOUT,
       // Uncomment these 2 lines on iOS - only available on iOS
       // HealthDataType.HIGH_HEART_RATE_EVENT,
-      HealthDataType.WORKOUT,
+      // HealthDataType.WORKOUT,
       // HealthDataType.DISTANCE_WALKING_RUNNING,
       // HealthDataType.AUDIOGRAM
     ];
 
     // with coresponsing permissions
     final permissions = [
-      // HealthDataAccess.READ,
-      // HealthDataAccess.READ,
-      // HealthDataAccess.READ,
-      // HealthDataAccess.READ,
       HealthDataAccess.READ,
-      // HealthDataAccess.READ,
-      // HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
     ];
 
     // get data within the last 24 hours
