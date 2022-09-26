@@ -11,6 +11,7 @@ The plugin supports:
 - writing audiograms on iOS using the `writeAudiogram` method.
 - accessing total step counts using the `getTotalStepsInInterval` method.
 - cleaning up dublicate data points via the `removeDuplicates` method.
+- capability to get Sleep Stages data such as REM Sleep, Deep Sleep, Light Sleep, Awake (during sleep) provide by Google Fit for Android device. All sleep   stages store in HealthDataType.SLEEP_ASLEEP.
 
 Note that for Android, the target phone **needs** to have [Google Fit](https://www.google.com/fit/) installed and have access to the internet, otherwise this plugin will not work.
 
