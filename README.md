@@ -1,7 +1,6 @@
 # Health Fit
 
-Enables reading and writing health data from/to Apple Health and Google Fit.
-Flutter package enhancement from [health](https://github.com/cph-cachet/flutter-plugins/tree/master/packages/health).
+Flutter package for reading and writing health data from/to Apple Health Kit and Google Fit, enhancement from [health](https://github.com/cph-cachet/flutter-plugins/tree/master/packages/health).
 The enhancement include:
 1. Capability to get Sleep Stages data such as REM Sleep, Deep Sleep, Light Sleep, Awake (during sleep) provide by Google Fit for Android device. All sleep stages store in HealthDataType.SLEEP_ASLEEP.
 2. Compatibility for wider Flutter version, start from Flutter 2 and above.
