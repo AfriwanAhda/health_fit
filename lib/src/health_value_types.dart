@@ -1,3 +1,5 @@
+// ignore_for_file: sdk_version_since
+
 part of health;
 
 /// A numerical value from Apple HealthKit or Google Fit

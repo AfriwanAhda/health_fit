@@ -16,7 +16,7 @@ class HealthFactory {
   final _deviceInfo = DeviceInfoPlugin();
 
   static PlatformType _platformType =
-  Platform.isAndroid ? PlatformType.ANDROID : PlatformType.IOS;
+      Platform.isAndroid ? PlatformType.ANDROID : PlatformType.IOS;
 
   /// Check if a given data type is available on the platform
   bool isDataTypeAvailable(HealthDataType dataType) =>
@@ -56,7 +56,7 @@ class HealthFactory {
     final mTypes = List<HealthDataType>.from(types, growable: true);
     final mPermissions = permissions == null
         ? List<int>.filled(types.length, HealthDataAccess.READ.index,
-        growable: true)
+            growable: true)
         : permissions.map((permission) => permission.index).toList();
 
     /// On Android, if BMI is requested, then also ask for weight and height
@@ -93,9 +93,9 @@ class HealthFactory {
   ///   this method will return **true if the window asking for permission was showed to the user without errors**
   ///   if it is called on iOS with a READ or READ_WRITE access.
   Future<bool> requestAuthorization(
-      List<HealthDataType> types, {
-        List<HealthDataAccess>? permissions,
-      }) async {
+    List<HealthDataType> types, {
+    List<HealthDataAccess>? permissions,
+  }) async {
     if (permissions != null && permissions.length != types.length) {
       throw ArgumentError(
           'The length of [types] must be same as that of [permissions].');
@@ -104,7 +104,7 @@ class HealthFactory {
     final mTypes = List<HealthDataType>.from(types, growable: true);
     final mPermissions = permissions == null
         ? List<int>.filled(types.length, HealthDataAccess.READ.index,
-        growable: true)
+            growable: true)
         : permissions.map((permission) => permission.index).toList();
 
     // on Android, if BMI is requested, then also ask for weight and height
@@ -137,17 +137,17 @@ class HealthFactory {
   Future<List<HealthDataPoint>> _computeAndroidBMI(
       DateTime startTime, DateTime endTime) async {
     List<HealthDataPoint> heights =
-    await _prepareQuery(startTime, endTime, HealthDataType.HEIGHT);
+        await _prepareQuery(startTime, endTime, HealthDataType.HEIGHT);
 
     if (heights.isEmpty) {
       return [];
     }
 
     List<HealthDataPoint> weights =
-    await _prepareQuery(startTime, endTime, HealthDataType.WEIGHT);
+        await _prepareQuery(startTime, endTime, HealthDataType.WEIGHT);
 
     double h =
-    (heights.last.value as NumericHealthValue).numericValue.toDouble();
+        (heights.last.value as NumericHealthValue).numericValue.toDouble();
 
     const dataType = HealthDataType.BODY_MASS_INDEX;
     final unit = _dataTypeToUnit[dataType]!;
@@ -158,16 +158,16 @@ class HealthFactory {
           (weights[i].value as NumericHealthValue).numericValue.toDouble() /
               (h * h);
       final x = HealthDataPoint(
-          NumericHealthValue(bmiValue),
-          dataType,
-          unit,
-          weights[i].dateFrom,
-          weights[i].dateTo,
-          _platformType,
-          _deviceId!,
-          '',
-          '',
-          [],
+        NumericHealthValue(bmiValue),
+        dataType,
+        unit,
+        weights[i].dateFrom,
+        weights[i].dateTo,
+        _platformType,
+        _deviceId!,
+        '',
+        '',
+        [],
       );
 
       bmiHealthPoints.add(x);
@@ -190,12 +190,12 @@ class HealthFactory {
   ///
   /// Values for Sleep and Headache are ignored and will be automatically assigned the coresponding value.
   Future<bool> writeHealthData(
-      double value,
-      HealthDataType type,
-      DateTime startTime,
-      DateTime endTime, {
-        HealthDataUnit? unit,
-      }) async {
+    double value,
+    HealthDataType type,
+    DateTime startTime,
+    DateTime endTime, {
+    HealthDataUnit? unit,
+  }) async {
     if (startTime.isAfter(endTime))
       throw ArgumentError("startTime must be equal or earlier than endTime");
     if ([
@@ -282,10 +282,10 @@ class HealthFactory {
 
   /// Fetch a list of health data points based on [types].
   Future<List<HealthDataPoint>> getHealthDataFromTypes(
-      DateTime startTime,
-      DateTime endTime,
-      List<HealthDataType> types,
-      ) async {
+    DateTime startTime,
+    DateTime endTime,
+    List<HealthDataType> types,
+  ) async {
     List<HealthDataPoint> dataPoints = [];
 
     for (var type in types) {
@@ -306,7 +306,7 @@ class HealthFactory {
       DateTime startTime, DateTime endTime, HealthDataType dataType) async {
     // Ask for device ID only once
     _deviceId ??= _platformType == PlatformType.ANDROID
-        ? (await _deviceInfo.androidInfo).androidId
+        ? (await _deviceInfo.androidInfo).id
         : (await _deviceInfo.iosInfo).identifierForVendor;
 
     // If not implemented on platform, throw an exception
@@ -400,9 +400,9 @@ class HealthFactory {
   ///
   /// Is a fix according to https://stackoverflow.com/questions/29414386/step-count-retrieved-through-google-fit-api-does-not-match-step-count-displayed/29415091#29415091
   Future<int?> getTotalStepsInInterval(
-      DateTime startTime,
-      DateTime endTime,
-      ) async {
+    DateTime startTime,
+    DateTime endTime,
+  ) async {
     final args = <String, dynamic>{
       'startTime': startTime.millisecondsSinceEpoch,
       'endTime': endTime.millisecondsSinceEpoch
@@ -451,14 +451,14 @@ class HealthFactory {
   /// - [totalDistance] The total distance traveled during the workout
   /// - [totalDistanceUnit] The UNIT used to measure [totalDistance] *ONLY FOR IOS* Default value is METER.
   Future<bool> writeWorkoutData(
-      HealthWorkoutActivityType activityType,
-      DateTime start,
-      DateTime end, {
-        int? totalEnergyBurned,
-        HealthDataUnit totalEnergyBurnedUnit = HealthDataUnit.KILOCALORIE,
-        int? totalDistance,
-        HealthDataUnit totalDistanceUnit = HealthDataUnit.METER,
-      }) async {
+    HealthWorkoutActivityType activityType,
+    DateTime start,
+    DateTime end, {
+    int? totalEnergyBurned,
+    HealthDataUnit totalEnergyBurnedUnit = HealthDataUnit.KILOCALORIE,
+    int? totalDistance,
+    HealthDataUnit totalDistanceUnit = HealthDataUnit.METER,
+  }) async {
     final args = <String, dynamic>{
       'activityType': activityType.typeToString(),
       'startTime': start.millisecondsSinceEpoch,

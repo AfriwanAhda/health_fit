@@ -1,3 +1,5 @@
+// ignore_for_file: sdk_version_since
+
 part of health;
 
 /// A [HealthDataPoint] object corresponds to a data point capture from
@@ -57,7 +59,7 @@ class HealthDataPoint {
     return HealthDataPoint(
         healthValue,
         HealthDataType.values.firstWhere(
-                (element) => element.typeToString() == json['data_type']),
+            (element) => element.typeToString() == json['data_type']),
         HealthDataUnit.values
             .firstWhere((element) => element.typeToString() == json['unit']),
         DateTime.parse(json['date_from']),
@@ -73,17 +75,17 @@ class HealthDataPoint {
 
   /// Converts the [HealthDataPoint] to a json object
   Map<String, dynamic> toJson() => {
-    'value': value.toJson(),
-    'data_type': type.typeToString(),
-    'unit': type.typeToString(),
-    'date_from': dateFrom.toIso8601String(),
-    'date_to': dateTo.toIso8601String(),
-    'platform_type': PlatformTypeJsonValue[platform],
-    'device_id': deviceId,
-    'source_id': sourceId,
-    'source_name': sourceName,
-    'sleep_stages': sleepStages
-  };
+        'value': value.toJson(),
+        'data_type': type.typeToString(),
+        'unit': type.typeToString(),
+        'date_from': dateFrom.toIso8601String(),
+        'date_to': dateTo.toIso8601String(),
+        'platform_type': PlatformTypeJsonValue[platform],
+        'device_id': deviceId,
+        'source_id': sourceId,
+        'source_name': sourceName,
+        'sleep_stages': sleepStages
+      };
 
   @override
   String toString() => """${this.runtimeType} - 
